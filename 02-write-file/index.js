@@ -12,18 +12,17 @@ fs.writeFile(
 stdout.write('Приветствую тебя. Введите пожалуйста текст\n')
 stdin.on('data', (data) => {
         let exit = data.toString().trim()
-        let dataTextDouble = data.toString()
+        let dataString = data.toString()
         if(exit === 'exit' ) process.exit()
         fs.appendFile(
             path.join(__dirname, 'text.txt'),
-            `${dataTextDouble}`,
+            `${dataString}`,
             (err) => {
                 if(err) throw err
             }
         )
-        
 })
- process.on('SIGINT',()=> {
-     process.exit()
-    })
-process.on('exit', ()=> stdout.write('Удачи в изучении Node js\n'))
+process.on('SIGINT',() => {
+    process.exit()
+})
+process.on('exit', () => stdout.write('\nУдачи в изучении Node js\n'))
