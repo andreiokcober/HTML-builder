@@ -5,14 +5,17 @@ const bundle = fs.createWriteStream(path.join(__dirname,'project-dist','style.cs
 const styles = path.join(__dirname,'styles')
 const assetsOld = path.join(__dirname,'assets')
 const assetsNew = path.join(__dirname,'project-dist','assets')
-
-
 const projectBuld = path.join(__dirname,'project-dist')
 
 async function projectBuild() {
-    fs.promises.mkdir(projectBuld,{recursive:true})
+    fs.rm(assetsNew,{recursive:true,force:true}, (err) => {
+        if(err) throw err
+    })
+    fs.promises.mkdir(projectBuld,{recursive:true}, (err) => {
+        if(err) throw err
+    })
     createCssFile(styles)
-    copyDir(assetsNew)
+    copyDir(assetsOld,assetsNew)
 }
 
 const createCssFile = (direction) =>{
@@ -32,29 +35,24 @@ function copyCssFile(file) {
     rs.on('error', err=> console.log(err))
 }
 
-async function copyDir(){
-    fs.promises.rm( path.join(__dirname,'project-dist','assets'), {recursive:true,force:true})
-    .then( () => {
-        fs.promises.mkdir(assetsNew,{recursive:true})
-        fs.promises.readdir(assetsOld,{withFileTypes: true})
-        .then((files) => {
-            for(let file of files){
-                if(file.isDirectory()){
-                    fs.promises.mkdir(path.join(__dirname,'project-dist','assets',`${file.name}`),{recursive:true})
-                }
-                // if(file.isFile()){
-                //     console.log('file')
-                // }
-                // let firstFilePath = path.join(assetsOld,file.name)
-                // let secondFilePath = path.join(assetsNew,file.name)
-                // fs.promises.copyFile(firstFilePath,secondFilePath)
-            }
-            
-                
-                 
-            
+async function copyDir(src,dist){
+       await fs.promises.rm(dist, {force:true,recursive:true}, (err) => {
+            if(err) throw err
+        })
+        await fs.mkdir(dist,{recursive:true},(err) => {
+            if(err) throw err
         }) 
-          
-    })        
+        fs.readdir(src, {withFileTypes: true}, (err, files) => {
+            if(err) throw err
+            files.forEach( file => {
+                let newSrc = path.join(src,file.name)
+                let newdist = path.join(dist,file.name)
+                if(file.isFile()) {
+                    fs.promises.copyFile(newSrc,newdist)
+                } else if (file.isDirectory()){
+                    copyDir(newSrc,newdist)
+                }
+            })
+        })         
 } 
 projectBuild()
