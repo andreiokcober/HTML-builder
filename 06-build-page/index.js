@@ -6,6 +6,9 @@ const styles = path.join(__dirname,'styles')
 const assetsOld = path.join(__dirname,'assets')
 const assetsNew = path.join(__dirname,'project-dist','assets')
 const projectBuld = path.join(__dirname,'project-dist')
+const templateHtml = path.join(__dirname,'template.html')
+const components = path.join(__dirname,'components')
+const indexHtml = path.join(__dirname,'project-dist', 'index.html')
 
 async function projectBuild() {
     fs.rm(assetsNew,{recursive:true,force:true}, (err) => {
@@ -16,6 +19,7 @@ async function projectBuild() {
     })
     createCssFile(styles)
     copyDir(assetsOld,assetsNew)
+    createHtmlBuild()
 }
 
 const createCssFile = (direction) =>{
@@ -54,5 +58,28 @@ async function copyDir(src,dist){
                 }
             })
         })         
-} 
+}
+
+function createHtmlBuild() {
+    let template = fs.createReadStream(templateHtml)
+    template.on('data',data => {
+        let innerHtml = data.toString()
+        fs.readdir(components,{withFileTypes:true,}, (err, data) => {
+            if(err) throw err
+            data.forEach( file => {
+                if(file.isFile && path.extname(file.name) === '.html') {
+                    const componentsFile = path.join(components,file.name)
+                    fs.readFile(componentsFile, (err,data) => {
+                        if(err) throw err
+                        data = data.toString()
+                        innerHtml = innerHtml.replace(`{{${file.name.slice(0,-5)}}}`, data)
+                        const newHtmlFile = fs.createWriteStream(indexHtml)
+                        newHtmlFile.write(innerHtml)
+                    })
+                }
+            })
+        })
+    })
+}
+
 projectBuild()
